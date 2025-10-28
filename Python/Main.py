@@ -1,3 +1,4 @@
 from Knots import *
 
-Jones_Polynomial(three_1)
+calculator = Calculator()
+calculator.Jones_Polynomial(three_1)

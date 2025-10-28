@@ -104,9 +104,9 @@ public class CrossBehaviour : MonoBehaviour, IDragHandler, IBeginDragHandler, IE
         
     }
 
-    public void SetOrientation(bool isOUt, int edgeIndex, int trackIndex)
+    public void SetOrientation(bool isOut, int edgeIndex, int trackIndex)
     {
-        edgeBehaviours[edgeIndex].SetArrow(isOUt, trackIndex);
+        edgeBehaviours[edgeIndex].SetArrow(isOut, trackIndex);
     }
 
     public void ResetOrientation()
