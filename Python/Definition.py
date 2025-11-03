@@ -1,31 +1,17 @@
 from PolynomialDefinition import *
 
-class Edge:
-    def __init__(self, crossIndex, edgeIndex):
-        self.crossIndex = crossIndex
-        self.edgeIndex = edgeIndex
-    
-    def Equal(self, arg0, arg1 = None):
-        if arg1 == None:
-            return self.crossIndex == arg0.crossIndex and self.edgeIndex == arg0.edgeIndex
-        else:
-            return self.crossIndex == arg0 and self.edgeIndex == arg1
-        
 class Cross:
-    edges = []
+    connections = []
     sgn = 0
     from_0or2 = -1
     from_1or3 = -1
     
     def __init__(self, edge0, edge1, edge2, edge3):
-        self.edges = [Edge(edge0[0], edge0[1]), Edge(edge1[0], edge1[1]), 
-                      Edge(edge2[0], edge2[1]), Edge(edge3[0], edge3[1])]
+        self.connections = [edge0, edge1, edge2, edge3]
     
     def Copy(self):
-        return Cross((self.edges[0].crossIndex, self.edges[0].edgeIndex),
-                     (self.edges[1].crossIndex, self.edges[1].edgeIndex),
-                     (self.edges[2].crossIndex, self.edges[2].edgeIndex),
-                     (self.edges[3].crossIndex, self.edges[3].edgeIndex))
+        copy = self.connections.copy()
+        return Cross(copy[0], copy[1], copy[2], copy[3])
         
     def SetSgn(self, n):
         if n % 2 == 0:
@@ -47,48 +33,38 @@ class Cross:
 
 class Knot:
     crosses = []
-    orientStartEdges = [Edge(0, 0)]
+    orientStartEdges = [(0, 0)]
     writhe = 0
-                
-    def Count(self):
-        return len(self.crosses)
-    
+            
+    def __init__(self, *crosses):
+        self.crosses = crosses
+        self.SetWrithe()
+        
     def Copy(self):
         knot = Knot()
         knot.crosses = [cross.Copy() for cross in self.crosses]
         return knot
-        
-    def Print(self):
-        for cross in self.crosses:
-            cross.Print()
             
-    def SetCross(self, *crosses):
-        self.crosses = crosses
-        self.SetWrithe()
-            
-    def ConnectedEdge(self, arg0, arg1 = None):
-        if arg1 == None:
-            return self.crosses[arg0.crossIndex].edges[arg0.edgeIndex]
-        else:
-            return self.crosses[arg0].edges[arg1]
+    def ConnectedEdge(self, crossIndex, edgeIndex):
+            return self.crosses[crossIndex].connections[edgeIndex]
             
     def SetWrithe(self):
-        if self.Count() == 0:
+        if len(self.crosses) == 0:
             return
         
         startIndex = 0
         currentEdge = self.orientStartEdges[startIndex]
         
         while True:
-            nextEdge = self.ConnectedEdge(currentEdge)
-            self.crosses[nextEdge.crossIndex].SetSgn(nextEdge.edgeIndex)
+            nextEdge = self.ConnectedEdge(currentEdge[0], currentEdge[1])
+            self.crosses[nextEdge[0]].SetSgn(nextEdge[1])
             
             if sum(cross.sgn == 0 for cross in self.crosses) == 0:
                 break
                         
-            currentEdge = Edge(nextEdge.crossIndex, (nextEdge.edgeIndex + 2) % 4)
+            currentEdge = (nextEdge[0], (nextEdge[1] + 2) % 4)
                            
-            if currentEdge.Equal(self.orientStartEdges[startIndex]):
+            if currentEdge == self.orientStartEdges[startIndex]:
                 startIndex += 1
                 currentEdge = self.orientStartEdges[startIndex]
         
@@ -96,8 +72,8 @@ class Knot:
             self.writhe += cross.sgn
             
     def ConnectEdges(self, edge1, edge2):
-        self.crosses[edge1.crossIndex].edges[edge1.edgeIndex] = edge2
-        self.crosses[edge2.crossIndex].edges[edge2.edgeIndex] = edge1
+        self.crosses[edge1[0]].connections[edge1[1]] = edge2
+        self.crosses[edge2[0]].connections[edge2[1]] = edge1
         
 
 class Calculator:
@@ -112,17 +88,17 @@ class Calculator:
 
         trivialCount = 0
 
-        if with0.Equal(crossIndex, 3):
+        if with0 == (crossIndex, 3):
             trivialCount += 1
-        if with1.Equal(crossIndex, 2):
+        if with1 == (crossIndex, 2):
             trivialCount += 1
-        if with0.Equal(crossIndex, 1) and with2.Equal(crossIndex, 3):
+        if with0 == (crossIndex, 1) and with2 == (crossIndex, 3):
             trivialCount += 1
 
-        if with0.Equal(crossIndex, 1):
+        if with0 == (crossIndex, 1):
             knot.ConnectEdges(with2, with3)
 
-        elif with2.Equal(crossIndex, 3):
+        elif with2 == (crossIndex, 3):
             knot.ConnectEdges(with0, with1)
 
         else:
@@ -144,17 +120,17 @@ class Calculator:
 
         trivialCount = 0
 
-        if with0.Equal(crossIndex, 1):
+        if with0 == (crossIndex, 1):
             trivialCount += 1
-        if with2.Equal(crossIndex, 3):
+        if with2 == (crossIndex, 3):
             trivialCount += 1
-        if with1.Equal(crossIndex, 2) and with0.Equal(crossIndex, 3):
+        if with1 == (crossIndex, 2) and with0 == (crossIndex, 3):
             trivialCount += 1
 
-        if with0.Equal(crossIndex, 3):
+        if with0 == (crossIndex, 3):
             knot.ConnectEdges(with1, with2)
 
-        elif with1.Equal(crossIndex, 2):
+        elif with1 == (crossIndex, 2):
             knot.ConnectEdges(with0, with3)
 
         else:
@@ -204,7 +180,7 @@ class Calculator:
                 Func(abList + ["A"], n)
                 Func(abList + ["B"], n)
 
-        Func([], knot.Count())
+        Func([], len(knot.crosses))
         print("\n---Bracket---")
         polynomial.Print("A")
         return polynomial
