@@ -2,9 +2,6 @@ from PolynomialDefinition import *
 
 class Cross:
     connections = []
-    sgn = 0
-    from_0or2 = -1
-    from_1or3 = -1
     
     def __init__(self, edge0, edge1, edge2, edge3):
         self.connections = [edge0, edge1, edge2, edge3]
@@ -12,6 +9,10 @@ class Cross:
     def Copy(self):
         copy = self.connections.copy()
         return Cross(copy[0], copy[1], copy[2], copy[3])
+    
+    sgn = 0
+    from_0or2 = -1
+    from_1or3 = -1
         
     def SetSgn(self, n):
         if n % 2 == 0:
@@ -33,8 +34,6 @@ class Cross:
 
 class Knot:
     crosses = []
-    orientStartEdges = [(0, 0)]
-    writhe = 0
             
     def __init__(self, *crosses):
         self.crosses = crosses
@@ -45,9 +44,12 @@ class Knot:
         knot.crosses = [cross.Copy() for cross in self.crosses]
         return knot
             
+    orientStartEdges = [(0, 0)]
+    writhe = 0
+                      
     def ConnectedEdge(self, crossIndex, edgeIndex):
             return self.crosses[crossIndex].connections[edgeIndex]
-            
+                      
     def SetWrithe(self):
         if len(self.crosses) == 0:
             return
@@ -61,7 +63,7 @@ class Knot:
             
             if sum(cross.sgn == 0 for cross in self.crosses) == 0:
                 break
-                        
+            
             currentEdge = (nextEdge[0], (nextEdge[1] + 2) % 4)
                            
             if currentEdge == self.orientStartEdges[startIndex]:
@@ -74,7 +76,7 @@ class Knot:
     def ConnectEdges(self, edge1, edge2):
         self.crosses[edge1[0]].connections[edge1[1]] = edge2
         self.crosses[edge2[0]].connections[edge2[1]] = edge1
-        
+
 
 class Calculator:
     def A_Separate(self, target):
