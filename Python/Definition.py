@@ -10,68 +10,62 @@ class Cross:
         copy = self.connections.copy()
         return Cross(copy[0], copy[1], copy[2], copy[3])
     
-    sgn = 0
-    from_0or2 = -1
-    from_1or3 = -1
-        
-    def SetSgn(self, n):
-        if n % 2 == 0:
-            self.from_0or2 = n
+    track_0to2 = None
+    track_1to3 = None
+    
+    def SetTrack(self, edgeIndex):
+        if edgeIndex % 2 == 0:
+            self.track_0to2 = (edgeIndex == 0)
         else:
-            self.from_1or3 = n
+            self.track_1to3 = (edgeIndex == 1)
+    
+    def Sign(self):
+        if self.track_0to2 == None or self.track_1to3 == None:
+            return 0
             
-        if self.from_0or2 == -1 or self.from_1or3 == -1:
-            return
-        
-        if self.from_0or2 == 0 and self.from_1or3 == 1:
-            self.sgn = 1
-        if self.from_0or2 == 0 and self.from_1or3 == 3:
-            self.sgn = -1
-        if self.from_0or2 == 2 and self.from_1or3 == 1:
-            self.sgn = -1
-        if self.from_0or2 == 2 and self.from_1or3 == 3:
-            self.sgn = 1
+        if self.track_0to2 == self.track_1to3:
+            return 1
+        else:
+            return -1
 
 class Knot:
     crosses = []
-            
-    def __init__(self, *crosses):
+    
+    def __init__(self, *crosses, startEdges = [(0, 0)]):
         self.crosses = crosses
-        self.SetWrithe()
+        self.SetWrithe(startEdges)
         
     def Copy(self):
         knot = Knot()
         knot.crosses = [cross.Copy() for cross in self.crosses]
         return knot
             
-    orientStartEdges = [(0, 0)]
     writhe = 0
                       
     def ConnectedEdge(self, crossIndex, edgeIndex):
             return self.crosses[crossIndex].connections[edgeIndex]
                       
-    def SetWrithe(self):
+    def SetWrithe(self, startEdges):
         if len(self.crosses) == 0:
             return
         
-        startIndex = 0
-        currentEdge = self.orientStartEdges[startIndex]
+        componentIndex = 0
+        currentEdge = startEdges[componentIndex]
         
         while True:
             nextEdge = self.ConnectedEdge(currentEdge[0], currentEdge[1])
-            self.crosses[nextEdge[0]].SetSgn(nextEdge[1])
+            self.crosses[nextEdge[0]].SetTrack(nextEdge[1])
             
-            if sum(cross.sgn == 0 for cross in self.crosses) == 0:
+            if sum(cross.Sign() == 0 for cross in self.crosses) == 0:
                 break
             
             currentEdge = (nextEdge[0], (nextEdge[1] + 2) % 4)
-                           
-            if currentEdge == self.orientStartEdges[startIndex]:
-                startIndex += 1
-                currentEdge = self.orientStartEdges[startIndex]
+            
+            if currentEdge == startEdges[componentIndex]:
+                componentIndex += 1
+                currentEdge = startEdges[componentIndex]
         
-        for cross in self.crosses:
-            self.writhe += cross.sgn
+        self.writhe = sum(cross.Sign() for cross in self.crosses)
             
     def ConnectEdges(self, edge1, edge2):
         self.crosses[edge1[0]].connections[edge1[1]] = edge2

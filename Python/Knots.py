@@ -48,10 +48,9 @@ class Two_1_2(Knot):
         cross0 = Cross((1, 1), (1, 0), (1, 3), (1, 2))
         cross1 = Cross((0, 1), (0, 0), (0, 3), (0, 2))
         if plus:
-            self.orientStartEdges = [(0, 0), (0, 1)]
+            super().__init__(cross0, cross1, startEdges=[(0, 0), (0, 1)])
         else:
-            self.orientStartEdges = [(0, 0), (0, 3)]
-        super().__init__(cross0, cross1)
+            super().__init__(cross0, cross1, startEdges=[(0, 0), (0, 3)])
         
 trivial = Trivial()
 three_1 = Three_1()
