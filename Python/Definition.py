@@ -139,10 +139,10 @@ class Calculator:
 
     def SeparatedPolynomial(self, knot, separates):
         tmp = knot
-        polynomial = Polynomial([Variable(1, 0)])
-        A = Polynomial([Variable(1, 1)])
-        B = Polynomial([Variable(1, -1)])
-        trivialPolynomial = Polynomial([Variable(-1, -2), Variable(-1, 2)])
+        polynomial = Polynomial(Term(1, 0))
+        A = Polynomial(Term(1, 1))
+        B = Polynomial(Term(1, -1))
+        trivialPolynomial = Polynomial(Term(-1, -2), Term(-1, 2))
 
         totalTrivialCount = 0
 
@@ -164,7 +164,7 @@ class Calculator:
         return polynomial
 
     def Bracket_Polynomial(self, knot): 
-        polynomial = Polynomial([])
+        polynomial = Polynomial()
 
         def Func(abList, n):
             if len(abList) == n:          
@@ -178,33 +178,30 @@ class Calculator:
 
         Func([], len(knot.crosses))
         print("\n---Bracket---")
-        polynomial.Print("A")
+        print(polynomial.ToString("A"))
         return polynomial
-
 
     def X_Polynomial(self, knot):
         polynomial = self.Bracket_Polynomial(knot)
-        factor = Polynomial([Variable(-1, 3)])
+        factor = Polynomial(Term(-1, 3))
         writhe = -knot.writhe
 
         if writhe < 0:
             writhe *= -1
-            factor = Polynomial([Variable(-1, -3)])
+            factor = Polynomial(Term(-1, -3))
 
         for _ in range(writhe):
             polynomial.Times(factor)
 
         print("\n---X---")
-        polynomial.Print("A")
+        print(polynomial.ToString("A"))
         return polynomial
-
 
     def Jones_Polynomial(self, knot):
         polynomial = self.X_Polynomial(knot)
 
-        for variable in polynomial.terms:
-            variable.exponent *= -1
-            variable.denominator = 4
+        for term in polynomial.terms:
+            term.exponent *= -1
 
         print("\n---Jones---")
-        polynomial.Print("t")
+        print(polynomial.ToString("t", 4))
