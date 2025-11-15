@@ -14,8 +14,6 @@ from Knots import *
 #         cross1 = Cross((0, 3), (0, 2), (0, 1), (0, 0))
 #         super().__init__(cross0, cross1, startEdges = [(0, 0), (1, 2)])
 
-# print(Hopf_plus().writhe)
-# print(Hopf_minus().writhe)
 
 calculator = Calculator()
 calculator.Jones_Polynomial(three_1)

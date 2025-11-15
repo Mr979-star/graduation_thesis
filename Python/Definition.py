@@ -73,88 +73,85 @@ class Knot:
 
 
 class Calculator:
-    def A_Separate(self, target):
-        knot = target.Copy()
+    def A_Separate(self, knot):
         crossIndex = len(knot.crosses) - 1
 
-        with0 = knot.ConnectedEdge(crossIndex, 0)
-        with1 = knot.ConnectedEdge(crossIndex, 1)
-        with2 = knot.ConnectedEdge(crossIndex, 2)
-        with3 = knot.ConnectedEdge(crossIndex, 3)
+        connect0 = knot.ConnectedEdge(crossIndex, 0)
+        connect1 = knot.ConnectedEdge(crossIndex, 1)
+        connect2 = knot.ConnectedEdge(crossIndex, 2)
+        connect3 = knot.ConnectedEdge(crossIndex, 3)
 
         trivialCount = 0
 
-        if with0 == (crossIndex, 3):
+        if connect0 == (crossIndex, 3):
             trivialCount += 1
-        if with1 == (crossIndex, 2):
+        if connect1 == (crossIndex, 2):
             trivialCount += 1
-        if with0 == (crossIndex, 1) and with2 == (crossIndex, 3):
+        if connect0 == (crossIndex, 1) and connect2 == (crossIndex, 3):
             trivialCount += 1
 
-        if with0 == (crossIndex, 1):
-            knot.ConnectEdges(with2, with3)
+        if connect0 == (crossIndex, 1):
+            knot.ConnectEdges(connect2, connect3)
 
-        elif with2 == (crossIndex, 3):
-            knot.ConnectEdges(with0, with1)
+        elif connect2 == (crossIndex, 3):
+            knot.ConnectEdges(connect0, connect1)
 
         else:
-            knot.ConnectEdges(with0, with3)
-            knot.ConnectEdges(with1, with2)
+            knot.ConnectEdges(connect0, connect3)
+            knot.ConnectEdges(connect1, connect2)
 
         knot.crosses.pop(crossIndex)
 
         return knot, trivialCount
 
-    def B_Separate(self, target):
-        knot = target.Copy()
+    def B_Separate(self, knot):
         crossIndex = len(knot.crosses) - 1
 
-        with0 = knot.ConnectedEdge(crossIndex, 0)
-        with1 = knot.ConnectedEdge(crossIndex, 1)
-        with2 = knot.ConnectedEdge(crossIndex, 2)
-        with3 = knot.ConnectedEdge(crossIndex, 3)
+        connect0 = knot.ConnectedEdge(crossIndex, 0)
+        connect1 = knot.ConnectedEdge(crossIndex, 1)
+        connect2 = knot.ConnectedEdge(crossIndex, 2)
+        connect3 = knot.ConnectedEdge(crossIndex, 3)
 
         trivialCount = 0
 
-        if with0 == (crossIndex, 1):
+        if connect0 == (crossIndex, 1):
             trivialCount += 1
-        if with2 == (crossIndex, 3):
+        if connect2 == (crossIndex, 3):
             trivialCount += 1
-        if with1 == (crossIndex, 2) and with0 == (crossIndex, 3):
+        if connect1 == (crossIndex, 2) and connect0 == (crossIndex, 3):
             trivialCount += 1
 
-        if with0 == (crossIndex, 3):
-            knot.ConnectEdges(with1, with2)
+        if connect0 == (crossIndex, 3):
+            knot.ConnectEdges(connect1, connect2)
 
-        elif with1 == (crossIndex, 2):
-            knot.ConnectEdges(with0, with3)
+        elif connect1 == (crossIndex, 2):
+            knot.ConnectEdges(connect0, connect3)
 
         else:
-            knot.ConnectEdges(with0, with1)
-            knot.ConnectEdges(with2, with3)
+            knot.ConnectEdges(connect0, connect1)
+            knot.ConnectEdges(connect2, connect3)
 
         knot.crosses.pop(crossIndex)
 
         return knot, trivialCount
 
     def SeparatedPolynomial(self, knot, separates):
-        tmp = knot
-        polynomial = Polynomial(Term(1, 0))
-        A = Polynomial(Term(1, 1))
-        B = Polynomial(Term(1, -1))
-        trivialPolynomial = Polynomial(Term(-1, -2), Term(-1, 2))
+        polynomial = Polynomial(Term(1, Fraction(0)))
+        A = Polynomial(Term(1, Fraction(1)))
+        B = Polynomial(Term(1, Fraction(-1)))
+        trivialPolynomial = Polynomial(Term(-1, Fraction(-2)), Term(-1, Fraction(2)))
 
         totalTrivialCount = 0
 
         for ab in separates:
 
-            if ab == "A":
+            if ab == "a":
                 polynomial.Times(A)
-                tmp, trivialCount = self.A_Separate(tmp)
+                knot, trivialCount = self.A_Separate(knot.Copy())
 
-            if ab == "B":
+            if ab == "b":
                 polynomial.Times(B)
-                tmp, trivialCount = self.B_Separate(tmp)
+                knot, trivialCount = self.B_Separate(knot.Copy())
 
             totalTrivialCount += trivialCount
 
@@ -173,8 +170,8 @@ class Calculator:
                 polynomial.Add(add)
 
             else:
-                Func(abList + ["A"], n)
-                Func(abList + ["B"], n)
+                Func(abList + ["a"], n)
+                Func(abList + ["b"], n)
 
         Func([], len(knot.crosses))
         print("\n---Bracket---")
@@ -183,12 +180,12 @@ class Calculator:
 
     def X_Polynomial(self, knot):
         polynomial = self.Bracket_Polynomial(knot)
-        factor = Polynomial(Term(-1, 3))
+        factor = Polynomial(Term(-1, Fraction(3)))
         writhe = -knot.writhe
 
         if writhe < 0:
             writhe *= -1
-            factor = Polynomial(Term(-1, -3))
+            factor = Polynomial(Term(-1, Fraction(-3)))
 
         for _ in range(writhe):
             polynomial.Times(factor)
@@ -201,7 +198,7 @@ class Calculator:
         polynomial = self.X_Polynomial(knot)
 
         for term in polynomial.terms:
-            term.exponent *= -1
+            term.exponent /= -4
 
         print("\n---Jones---")
-        print(polynomial.ToString("t", 4))
+        print(polynomial.ToString("t"))

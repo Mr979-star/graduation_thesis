@@ -1,6 +1,8 @@
+from fractions import Fraction
+
 class Term:
     coefficient = 1
-    exponent = 0
+    exponent = Fraction()
     
     def __init__(self, coefficient, exponent):
         self.coefficient = coefficient
@@ -10,7 +12,7 @@ class Term:
         self.coefficient *= term.coefficient
         self.exponent += term.exponent
         
-    def ToString(self, var, denom):
+    def ToString(self, var):
         cof = str(self.coefficient)
         if self.coefficient > 0:
             cof = "+" + cof
@@ -19,23 +21,8 @@ class Term:
         if self.exponent == 0:
             var = ""
         else:
-            n = 2
-            num = abs(self.exponent)
-            while n <= min(num, denom):
-                while num % n == 0 and denom % n == 0:                    
-                    num = int(num / n)
-                    denom = int(denom / n)
-                n += 1
-            
-            if self.exponent < 0:
-                num *= -1
-            
-            if num != denom:
-                if denom == 1:
-                    exp = "^(" + str(num) + ")"
-                else:
-                    exp = "^(" + str(num) +  "/" + str(denom) + ")"
-        
+            if self.exponent != 1:
+                exp = "(" + str(self.exponent) + ")"        
             if self.coefficient == 1:
                 cof = "+"
             if self.coefficient == -1:
@@ -81,17 +68,15 @@ class Polynomial:
         answer = Polynomial()  
         
         for term in polynomial.terms:
-            tmp = self.Copy()
-            tmp.TimesOnlyTerm(term)
+            p = self.Copy()
+            p.TimesOnlyTerm(term)
             
-            answer.Add(tmp)
+            answer.Add(p)
             
         self.terms = answer.terms
         
-    def ToString(self, var, denominator = 1):
-        text = ""
-        for term in self.terms:
-            text += term.ToString(var, denominator)
+    def ToString(self, var):
+        text = "".join(term.ToString(var) for term in self.terms)
         if text[0] == "+":
             text = text[1:]
             
