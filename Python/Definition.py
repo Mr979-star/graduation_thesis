@@ -75,26 +75,31 @@ class Knot:
 class Calculator:
     def A_Separate(self, knot):
         crossIndex = len(knot.crosses) - 1
-
+        trivialCount = 0
         connect0 = knot.ConnectedEdge(crossIndex, 0)
         connect1 = knot.ConnectedEdge(crossIndex, 1)
         connect2 = knot.ConnectedEdge(crossIndex, 2)
         connect3 = knot.ConnectedEdge(crossIndex, 3)
-
-        trivialCount = 0
-
-        if connect0 == (crossIndex, 3):
-            trivialCount += 1
-        if connect1 == (crossIndex, 2):
-            trivialCount += 1
+                    
         if connect0 == (crossIndex, 1) and connect2 == (crossIndex, 3):
-            trivialCount += 1
-
-        if connect0 == (crossIndex, 1):
+            trivialCount = 1
+            
+        elif connect0 == (crossIndex, 3) and connect1 == (crossIndex, 2):
+            trivialCount = 2
+            
+        elif connect0 == (crossIndex, 1):
             knot.ConnectEdges(connect2, connect3)
 
         elif connect2 == (crossIndex, 3):
             knot.ConnectEdges(connect0, connect1)
+
+        elif connect0 == (crossIndex, 3):
+            trivialCount = 1
+            knot.ConnectEdges(connect1, connect2)
+            
+        elif connect1 == (crossIndex, 2):
+            trivialCount = 1
+            knot.ConnectEdges(connect0, connect3)
 
         else:
             knot.ConnectEdges(connect0, connect3)
@@ -106,24 +111,29 @@ class Calculator:
 
     def B_Separate(self, knot):
         crossIndex = len(knot.crosses) - 1
-
+        trivialCount = 0
         connect0 = knot.ConnectedEdge(crossIndex, 0)
         connect1 = knot.ConnectedEdge(crossIndex, 1)
         connect2 = knot.ConnectedEdge(crossIndex, 2)
         connect3 = knot.ConnectedEdge(crossIndex, 3)
 
-        trivialCount = 0
+        if connect0 == (crossIndex, 1) and connect2 == (crossIndex, 3):
+            trivialCount = 2
+            
+        elif connect0 == (crossIndex, 3) and connect1 == (crossIndex, 2):
+            trivialCount = 1
+            
+        elif connect0 == (crossIndex, 1):
+            trivialCount = 1
+            knot.ConnectEdges(connect2, connect3)
 
-        if connect0 == (crossIndex, 1):
-            trivialCount += 1
-        if connect2 == (crossIndex, 3):
-            trivialCount += 1
-        if connect1 == (crossIndex, 2) and connect0 == (crossIndex, 3):
-            trivialCount += 1
+        elif connect2 == (crossIndex, 3):
+            trivialCount = 1
+            knot.ConnectEdges(connect0, connect1)
 
-        if connect0 == (crossIndex, 3):
+        elif connect0 == (crossIndex, 3):
             knot.ConnectEdges(connect1, connect2)
-
+            
         elif connect1 == (crossIndex, 2):
             knot.ConnectEdges(connect0, connect3)
 
