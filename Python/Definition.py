@@ -22,8 +22,7 @@ class Cross:
     def Sign(self):
         if self.track_0to2 == None or self.track_1to3 == None:
             return 0
-            
-        if self.track_0to2 == self.track_1to3:
+        elif self.track_0to2 == self.track_1to3:
             return 1
         else:
             return -1
@@ -145,50 +144,47 @@ class Calculator:
 
         return knot, trivialCount
 
-    def SeparatedPolynomial(self, knot, separates):
+    def SeparatedPolynomial(self, knot, abList):
         polynomial = Polynomial(Term(1, Fraction(0)))
-        A = Polynomial(Term(1, Fraction(1)))
-        B = Polynomial(Term(1, Fraction(-1)))
-        trivialPolynomial = Polynomial(Term(-1, Fraction(-2)), Term(-1, Fraction(2)))
-
+        a = Polynomial(Term(1, Fraction(1)))
+        b = Polynomial(Term(1, Fraction(-1)))
+        trivial = Polynomial(Term(-1, Fraction(-2)), Term(-1, Fraction(2)))
         totalTrivialCount = 0
 
-        for ab in separates:
-
+        for ab in abList:
             if ab == "a":
-                polynomial.Times(A)
+                polynomial.Times(a)
                 knot, trivialCount = self.A_Separate(knot.Copy())
 
-            if ab == "b":
-                polynomial.Times(B)
+            elif ab == "b":
+                polynomial.Times(b)
                 knot, trivialCount = self.B_Separate(knot.Copy())
 
             totalTrivialCount += trivialCount
 
         for _ in range(totalTrivialCount - 1):
-            polynomial.Times(trivialPolynomial)
+            polynomial.Times(trivial)
 
         return polynomial
 
-    def Bracket_Polynomial(self, knot): 
+    def BracketPolynomial(self, knot): 
         polynomial = Polynomial()
-
-        def Func(abList, n):
-            if len(abList) == n:          
+        
+        def Calculate(abList):
+            if len(abList) == len(knot.crosses):          
                 add = self.SeparatedPolynomial(knot, abList)
                 print("".join(abList) + " : " + add.ToString("A"))
                 polynomial.Add(add)
 
             else:
-                Func(abList + ["a"], n)
-                Func(abList + ["b"], n)
-
-        Func([], len(knot.crosses))
-        print("\n---Bracket---")
-        print(polynomial.ToString("A"))
+                Calculate(abList + ["a"])
+                Calculate(abList + ["b"])
+                
+        Calculate([])
+        print("\nBracket : " + polynomial.ToString("A"))
         return polynomial
 
-    def X_Polynomial(self, knot):
+    def XPolynomial(self, knot):
         polynomial = self.Bracket_Polynomial(knot)
         factor = Polynomial(Term(-1, Fraction(3)))
         writhe = -knot.writhe
@@ -204,7 +200,7 @@ class Calculator:
         print(polynomial.ToString("A"))
         return polynomial
 
-    def Jones_Polynomial(self, knot):
+    def JonesPolynomial(self, knot):
         polynomial = self.X_Polynomial(knot)
 
         for term in polynomial.terms:

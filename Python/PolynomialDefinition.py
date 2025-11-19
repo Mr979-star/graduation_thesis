@@ -44,10 +44,6 @@ class Polynomial:
         polynomial.terms = [term.Copy() for term in self.terms]
         return polynomial
     
-    def Update(self):
-        self.terms = [term for term in self.terms if term.coefficient != 0]
-        self.terms.sort(key=lambda x: -x.exponent)
-    
     def Add(self, polynomial):
         p = polynomial.Copy()
         for selfTerm in self.terms:
@@ -55,10 +51,7 @@ class Polynomial:
                 if selfTerm.exponent == term.exponent:
                     selfTerm.coefficient += term.coefficient
                     term.coefficient = 0
-                    
-        p.Update()
         self.terms += p.terms
-        self.Update()
         
     def TimesOnlyTerm(self, term):
         for t in self.terms:
@@ -76,6 +69,8 @@ class Polynomial:
         self.terms = answer.terms
         
     def ToString(self, var):
+        self.terms = [term for term in self.terms if term.coefficient != 0]
+        self.terms.sort(key=lambda x: -x.exponent)
         text = "".join(term.ToString(var) for term in self.terms)
         if text[0] == "+":
             text = text[1:]
