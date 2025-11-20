@@ -52,6 +52,7 @@ class Polynomial:
                     selfTerm.coefficient += term.coefficient
                     term.coefficient = 0
         self.terms += p.terms
+        self.terms = [term for term in self.terms if term.coefficient != 0]
         
     def TimesOnlyTerm(self, term):
         for t in self.terms:
@@ -59,20 +60,15 @@ class Polynomial:
             
     def Times(self, polynomial):
         answer = Polynomial()  
-        
         for term in polynomial.terms:
             p = self.Copy()
-            p.TimesOnlyTerm(term)
-            
+            p.TimesOnlyTerm(term)            
             answer.Add(p)
-            
         self.terms = answer.terms
         
     def ToString(self, var):
-        self.terms = [term for term in self.terms if term.coefficient != 0]
         self.terms.sort(key=lambda x: -x.exponent)
         text = "".join(term.ToString(var) for term in self.terms)
         if text[0] == "+":
             text = text[1:]
-            
         return text

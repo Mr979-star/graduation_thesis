@@ -17,5 +17,5 @@ class Hopf(Knot):
 
 calculator = Calculator()
 hopf_plus = Hopf()
-calculator.BracketPolynomial(hopf_plus)
-#calculator.Jones_Polynomial(three_1)
+#calculator.BracketPolynomial(hopf_plus)
+calculator.JonesPolynomial(Thistlethwaite())
