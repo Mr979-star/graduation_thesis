@@ -1,14 +1,14 @@
 from PolynomialDefinition import *
+from fractions import Fraction
+import time
 
 class Cross:
-    connections = []
-    
     def __init__(self, edge0, edge1, edge2, edge3):
         self.connections = [edge0, edge1, edge2, edge3]
     
     def Copy(self):
-        copy = self.connections.copy()
-        return Cross(copy[0], copy[1], copy[2], copy[3])
+        edges = self.connections
+        return Cross(edges[0], edges[1], edges[2], edges[3])
     
     track_0to2 = None
     track_1to3 = None
@@ -28,8 +28,6 @@ class Cross:
             return -1
 
 class Knot:
-    crosses = []
-    
     def __init__(self, *crosses, startEdges = [(0, 0)]):
         self.crosses = crosses
         self.SetWrithe(startEdges)
@@ -38,19 +36,18 @@ class Knot:
         knot = Knot()
         knot.crosses = [cross.Copy() for cross in self.crosses]
         return knot
-            
-    writhe = 0
                       
     def ConnectedEdge(self, crossIndex, edgeIndex):
-            return self.crosses[crossIndex].connections[edgeIndex]
+        return self.crosses[crossIndex].connections[edgeIndex]
                       
     def SetWrithe(self, startEdges):
         if len(self.crosses) == 0:
+            self.writhe = 0
             return
-        
+
         componentIndex = 0
         currentEdge = startEdges[componentIndex]
-        
+
         while True:
             nextEdge = self.ConnectedEdge(currentEdge[0], currentEdge[1])
             self.crosses[nextEdge[0]].SetTrack(nextEdge[1])
@@ -172,14 +169,14 @@ class Calculator:
         def Calculate(separate):
             if len(separate) == len(knot.crosses):          
                 add = self.SeparatedPolynomial(knot, separate)
-                print(separate + " : " + add.ToString("A"))
+                #print(f"{separate} : {add.ToString("A")}")
                 polynomial.Add(add)
             else:
                 Calculate(separate + "a")
                 Calculate(separate + "b")
                 
         Calculate("")
-        print("Bracket : " + polynomial.ToString("A"))
+        print(f"\n---Bracket---\n{polynomial.ToString("A")}")
         return polynomial
 
     def XPolynomial(self, knot):
@@ -195,13 +192,17 @@ class Calculator:
         for _ in range(writhe):
             polynomial.Times(factor)
 
-        print("X : " + polynomial.ToString("A"))
+        print(f"\n---X---\n{polynomial.ToString("A")}")
         return polynomial
 
     def JonesPolynomial(self, knot):
+        startTime = time.perf_counter()
+        
         polynomial = self.XPolynomial(knot)
-
         for term in polynomial.terms:
             term.exponent /= -4
 
-        print("Jones : " + polynomial.ToString("t"))
+        print(f"\n---Jones---\n{polynomial.ToString("t")}")
+        
+        endTime = time.perf_counter()
+        print(f"\ntime : {endTime - startTime}")

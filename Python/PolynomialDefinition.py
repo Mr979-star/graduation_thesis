@@ -1,9 +1,4 @@
-from fractions import Fraction
-
 class Term:
-    coefficient = 1
-    exponent = Fraction()
-    
     def __init__(self, coefficient, exponent):
         self.coefficient = coefficient
         self.exponent = exponent
@@ -11,31 +6,26 @@ class Term:
     def Times(self, term):
         self.coefficient *= term.coefficient
         self.exponent += term.exponent
-        
+    
     def ToString(self, var):
-        cof = str(self.coefficient)
-        if self.coefficient > 0:
-            cof = "+" + cof
-        exp = ""
-        
+        cof = f"{self.coefficient:+}"
         if self.exponent == 0:
-            var = ""
+            return cof
         else:
-            if self.exponent != 1:
-                exp = "(" + str(self.exponent) + ")"        
+            if self.exponent == 1:
+                exp = ""
+            else:
+                exp = f"({self.exponent})"
             if self.coefficient == 1:
                 cof = "+"
             if self.coefficient == -1:
                 cof = "-"
-        
-        return cof + var + exp
+            return cof + var + exp
     
     def Copy(self):
         return Term(self.coefficient, self.exponent)
 
 class Polynomial:
-    terms = []
-    
     def __init__(self, *terms):
         self.terms = list(terms)
     
@@ -45,15 +35,21 @@ class Polynomial:
         return polynomial
     
     def Add(self, polynomial):
-        p = polynomial.Copy()
-        for selfTerm in self.terms:
-            for term in p.terms:
-                if selfTerm.exponent == term.exponent:
-                    selfTerm.coefficient += term.coefficient
-                    term.coefficient = 0
-        self.terms += p.terms
-        self.terms = [term for term in self.terms if term.coefficient != 0]
-        
+        i = 0
+        while i < len(polynomial.terms):
+            j = 0
+            while j < len(self.terms):
+                if self.terms[j].exponent == polynomial.terms[i].exponent:
+                    self.terms[j].coefficient += polynomial.terms[i].coefficient
+                    polynomial.terms.pop(i)
+                    i -= 1
+                    if self.terms[j].coefficient == 0:
+                        self.terms.pop(j)
+                    break
+                j += 1
+            i += 1
+        self.terms += polynomial.terms                
+    
     def TimesOnlyTerm(self, term):
         for t in self.terms:
             t.Times(term)
@@ -65,7 +61,7 @@ class Polynomial:
             p.TimesOnlyTerm(term)            
             answer.Add(p)
         self.terms = answer.terms
-        
+    
     def ToString(self, var):
         self.terms.sort(key=lambda x: -x.exponent)
         text = "".join(term.ToString(var) for term in self.terms)
