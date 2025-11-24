@@ -101,7 +101,7 @@ class Calculator:
             knot.ConnectEdges(connect0, connect3)
             knot.ConnectEdges(connect1, connect2)
 
-        knot.crosses.pop(crossIndex)
+        del knot.crosses[crossIndex]
 
         return trivialCount
 
@@ -137,7 +137,7 @@ class Calculator:
             knot.ConnectEdges(connect0, connect1)
             knot.ConnectEdges(connect2, connect3)
 
-        knot.crosses.pop(crossIndex)
+        del knot.crosses[crossIndex]
 
         return trivialCount
 
@@ -153,7 +153,6 @@ class Calculator:
             if ab == "a":
                 polynomial.Times(a)
                 trivialCount += self.A_Separate(knot)
-
             elif ab == "b":
                 polynomial.Times(b)
                 trivialCount += self.B_Separate(knot)
@@ -163,46 +162,38 @@ class Calculator:
 
         return polynomial
 
-    def BracketPolynomial(self, knot): 
+    def Bracket_Polynomial(self, knot): 
         polynomial = Polynomial()
         
-        def Calculate(separate):
+        def AddAllSeparates(separate):
             if len(separate) == len(knot.crosses):          
                 add = self.SeparatedPolynomial(knot, separate)
-                #print(f"{separate} : {add.ToString("A")}")
                 polynomial.Add(add)
             else:
-                Calculate(separate + "a")
-                Calculate(separate + "b")
+                AddAllSeparates(separate + "a")
+                AddAllSeparates(separate + "b")
                 
-        Calculate("")
-        print(f"\n---Bracket---\n{polynomial.ToString("A")}")
+        AddAllSeparates("")
+        print(f"bracket: {polynomial.ToString("A")}")
         return polynomial
 
-    def XPolynomial(self, knot):
-        polynomial = self.BracketPolynomial(knot)
-
-        if knot.writhe > 0:
-            writhe = knot.writhe
-            factor = Polynomial(Term(-1, Fraction(-3)))
-        else:
-            writhe = -knot.writhe
-            factor = Polynomial(Term(-1, Fraction(3)))
-
-        for _ in range(writhe):
-            polynomial.Times(factor)
-
-        print(f"\n---X---\n{polynomial.ToString("A")}")
+    def X_Polynomial(self, knot):
+        term = Term(1 - 2 * (knot.writhe % 2), Fraction(3 * -knot.writhe))
+        polynomial = self.Bracket_Polynomial(knot)
+        polynomial.Times(Polynomial(term))
+        print(f"X      : {polynomial.ToString("A")}")
         return polynomial
 
-    def JonesPolynomial(self, knot):
-        startTime = time.perf_counter()
-        
-        polynomial = self.XPolynomial(knot)
+    def Jones_Polynomial(self, knot):       
+        polynomial = self.X_Polynomial(knot)
         for term in polynomial.terms:
             term.exponent /= -4
-
-        print(f"\n---Jones---\n{polynomial.ToString("t")}")
+        print(f"Jones  : {polynomial.ToString("t")}")
+        return polynomial
         
+    def Calculate(self, knot):
+        print(f"\n---{knot.__class__.__name__}---")       
+        startTime = time.perf_counter() 
+        self.Jones_Polynomial(knot)        
         endTime = time.perf_counter()
-        print(f"\ntime : {endTime - startTime}")
+        print(f"time   : {endTime - startTime}s")

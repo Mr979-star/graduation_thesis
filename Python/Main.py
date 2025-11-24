@@ -1,21 +1,12 @@
 from Knots import *
 
-class Hopf(Knot):
-
-    def __init__(self):
-        cross0 = Cross((1, 3), (1, 2), (1, 1), (1, 0))
-        cross1 = Cross((0, 3), (0, 2), (0, 1), (0, 0))
-        super().__init__(cross0, cross1, startEdges = [(0, 0), (0, 1)])
-        
-# class Hopf_minus(Knot):
-
-#     def __init__(self):
-#         cross0 = Cross((1, 3), (1, 2), (1, 1), (1, 0))
-#         cross1 = Cross((0, 3), (0, 2), (0, 1), (0, 0))
-#         super().__init__(cross0, cross1, startEdges = [(0, 0), (1, 2)])
-
-
 calculator = Calculator()
-hopf_plus = Hopf()
-#calculator.BracketPolynomial(hopf_plus)
-calculator.JonesPolynomial(Thistlethwaite())
+calculator.Calculate(Hopf())
+calculator.Calculate(Trivial())
+calculator.Calculate(Trefoil())
+calculator.Calculate(EightFigure())
+
+calculator.Calculate(Five_1())
+calculator.Calculate(Seven_3())
+calculator.Calculate(Hopf_minus())
+calculator.Calculate(Borromean())

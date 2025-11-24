@@ -41,10 +41,10 @@ class Polynomial:
             while j < len(self.terms):
                 if self.terms[j].exponent == polynomial.terms[i].exponent:
                     self.terms[j].coefficient += polynomial.terms[i].coefficient
-                    polynomial.terms.pop(i)
+                    del polynomial.terms[i]
                     i -= 1
                     if self.terms[j].coefficient == 0:
-                        self.terms.pop(j)
+                        del self.terms[j]
                     break
                 j += 1
             i += 1
@@ -63,7 +63,7 @@ class Polynomial:
         self.terms = answer.terms
     
     def ToString(self, var):
-        self.terms.sort(key=lambda x: -x.exponent)
+        self.terms.sort(key = lambda x: x.exponent)
         text = "".join(term.ToString(var) for term in self.terms)
         if text[0] == "+":
             text = text[1:]
