@@ -61,7 +61,7 @@ class Borromean(Knot):
         cross5 = Cross((4, 3), (0, 2), (2, 3), (3, 2))
         super().__init__(cross0, cross1, cross2, cross3, cross4, cross5, startEdges = [(0, 1), (2, 3), (5, 1)])
 
-class Thistlethwaite(Knot):
+class ThistlethwaiteUnknot(Knot):
     def __init__(self):
         cross0 = Cross((3, 0), (9, 0), (1, 1), (1, 0))
         cross1 = Cross((0, 3), (0, 2), (7, 1), (2, 1))
@@ -77,6 +77,5 @@ class Thistlethwaite(Knot):
         cross11 = Cross((10, 1), (9, 1), (14, 3), (14, 2))
         cross12 = Cross((8, 3), (10, 2), (13, 1), (6, 3))
         cross13 = Cross((3, 3), (12, 2), (14, 1), (14, 0))
-        cross14 = Cross((13, 3), (13, 2), (11, 3), (11, 2))
-        
+        cross14 = Cross((13, 3), (13, 2), (11, 3), (11, 2))       
         super().__init__(cross0, cross1, cross2, cross3, cross4, cross5, cross6, cross7, cross8, cross9, cross10, cross11, cross12, cross13, cross14)
