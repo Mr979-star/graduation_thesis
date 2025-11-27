@@ -6,9 +6,7 @@ using System.Linq;
 public class Knot
 {
     public List<Cross> crosses = new();
-
-    public List<List<Edge>> edgeTracks;
-    public int Writhe { get; set; }
+    public List<List<(int, int)>> edgeTracks;
 
     public Knot(List<Cross> crosses)
     {
@@ -17,42 +15,31 @@ public class Knot
 
     public Knot Copy() => new Knot(new List<Cross>(crosses));
 
-    public Edge ConnectedEdge(int crossIndex, int edgeIndex) => crosses[crossIndex].ConnectedEdge(edgeIndex);
-
-    public void Print()
-    {
-        foreach (List<Edge> track in edgeTracks)
-        {
-            string text = "";
-            foreach (Edge edge in track) text += edge.String();
-
-            Debug.Log(text);
-        }
-    }
+    public (int, int) ConnectedEdge(int crossIndex, int edgeIndex) => crosses[crossIndex].connectedEdges[edgeIndex];
 
     void SetOrientation()
     {
         edgeTracks = new();
 
-        if (crosses.Count() == 0) return;
+        if (crosses.Count == 0) return;
 
-        Edge startEdge = new(0, 0);
-        Edge currentEdge = new(0, 0);
+        (int, int) startEdge = (0, 0);
+        (int, int) currentEdge = (0, 0);
         edgeTracks.Add(new());
 
         while (true)
         {
-            Edge connected = crosses[currentEdge.crossIndex].ConnectedEdge(currentEdge.edgeIndex);
+            (int, int) nextEdge = ConnectedEdge(currentEdge.Item1, currentEdge.Item2);
 
-            edgeTracks[^1].Add(currentEdge.Copy());
-            edgeTracks[^1].Add(connected.Copy());
+            edgeTracks[^1].Add(currentEdge);
+            edgeTracks[^1].Add(nextEdge);
 
             if (edgeTracks.Sum(track => track.Count) == 4 * crosses.Count) break;            
 
-            currentEdge.crossIndex = connected.crossIndex;
-            currentEdge.edgeIndex = (connected.edgeIndex + 2) % 4;
+            currentEdge.Item1 = nextEdge.Item1;
+            currentEdge.Item2 = (nextEdge.Item2 + 2) % 4;
 
-            if (currentEdge.crossIndex == startEdge.crossIndex && currentEdge.edgeIndex == startEdge.edgeIndex)
+            if (currentEdge == startEdge)
             {
                 edgeTracks.Add(new());
 
@@ -60,126 +47,157 @@ public class Knot
                 {
                     for (int j = 0; j < 4; j++)
                     {
-                        if (edgeTracks.Sum(track => track.Count(edge => edge.crossIndex == i && edge.edgeIndex == j)) == 0)
+                        if (edgeTracks.Sum(track => track.Count(edge => edge.Item1 == i && edge.Item2 == j)) == 0)
                         {
-                            startEdge = new(i, j);
-                            currentEdge = new(i, j);
+                            startEdge = (i, j);
+                            currentEdge = (i, j);
                         }
                     }
                 }
             }
-        }        
-    }
-
-    public void ChangeOrientation(int trackIndex)
-    {
-        List<Edge> track = edgeTracks[trackIndex];
-        track.Reverse();
-    }
-
-    (Knot, int) A_Separate(Knot target)
-    {
-        Knot knot = target.Copy();
-        int crossIndex = knot.crosses.Count() - 1;
-
-        Edge with0 = knot.ConnectedEdge(crossIndex, 0);
-        Edge with1 = knot.ConnectedEdge(crossIndex, 1);
-        Edge with2 = knot.ConnectedEdge(crossIndex, 2);
-        Edge with3 = knot.ConnectedEdge(crossIndex, 3);
-
-        int trivialCount = 0;
-        if (with0.crossIndex == crossIndex && with0.edgeIndex == 3) trivialCount++;
-        if (with1.crossIndex == crossIndex && with1.edgeIndex == 2) trivialCount++;
-        if (with0.crossIndex == crossIndex && with0.edgeIndex == 1 && with2.crossIndex == crossIndex && with2.edgeIndex == 3) trivialCount++;
-
-        if (with0.crossIndex == crossIndex && with0.edgeIndex == 1)
-        {
-            knot.crosses[with2.crossIndex].connectedEdges[with2.edgeIndex] = with3;
-            knot.crosses[with3.crossIndex].connectedEdges[with3.edgeIndex] = with2;
         }
-        else if (with2.crossIndex == crossIndex && with2.edgeIndex == 3)
+    }
+
+    public void ChangeOrientation((int, int) edge)
+    {
+        foreach (List<(int, int)> track in edgeTracks)
         {
-            knot.crosses[with0.crossIndex].connectedEdges[with0.edgeIndex] = with1;
-            knot.crosses[with1.crossIndex].connectedEdges[with1.edgeIndex] = with0;
+            if (track.Contains(edge))
+            {
+                track.Reverse(); break;
+            }
+        }
+    }
+
+    int Writhe()
+    {
+        for (int i = 0; i < edgeTracks.Count; i++)
+        {
+            for (int j = 0; j < edgeTracks[i].Count; j += 2)
+            {
+                crosses[edgeTracks[i][j].Item1].SetTrack(edgeTracks[i][j].Item2);
+            }
+        }
+
+        return crosses.Sum(cross => cross.Sign());
+    }
+
+    void ConnectEdges((int, int) edge1, (int, int) edge2)
+    {
+        crosses[edge1.Item1].connectedEdges[edge1.Item2] = edge2;
+        crosses[edge2.Item1].connectedEdges[edge2.Item2] = edge1;
+    }
+
+    int A_Separate(Knot knot)
+    {
+        int crossIndex = knot.crosses.Count - 1;
+        int trivialCount = 0;
+        (int, int) connect0 = knot.ConnectedEdge(crossIndex, 0);
+        (int, int) connect1 = knot.ConnectedEdge(crossIndex, 1);
+        (int, int) connect2 = knot.ConnectedEdge(crossIndex, 2);
+        (int, int) connect3 = knot.ConnectedEdge(crossIndex, 3);
+
+        if (connect0 == (crossIndex, 1) && connect2 == (crossIndex, 3))
+        {
+            trivialCount = 1;
+        }
+        else if (connect0 == (crossIndex, 3) && connect1 == (crossIndex, 2))
+        {
+            trivialCount = 2;
+        }
+        else if (connect0 == (crossIndex, 1))
+        {
+            knot.ConnectEdges(connect2, connect3);
+        }
+        else if (connect2 == (crossIndex, 3))
+        {
+            knot.ConnectEdges(connect0, connect1);
+        }
+        else if (connect0 == (crossIndex, 3))
+        {
+            trivialCount = 1;
+            knot.ConnectEdges(connect1, connect2);
+        }
+        else if (connect1 == (crossIndex, 2))
+        {
+            trivialCount = 1;
+            knot.ConnectEdges(connect0, connect3);
         }
         else
         {
-            knot.crosses[with0.crossIndex].connectedEdges[with0.edgeIndex] = with3;
-            knot.crosses[with3.crossIndex].connectedEdges[with3.edgeIndex] = with0;
-            knot.crosses[with1.crossIndex].connectedEdges[with1.edgeIndex] = with2;
-            knot.crosses[with2.crossIndex].connectedEdges[with2.edgeIndex] = with1;
+            knot.ConnectEdges(connect0, connect3);
+            knot.ConnectEdges(connect1, connect2);
         }
-
         knot.crosses.RemoveAt(crossIndex);
 
-        return (knot, trivialCount);
+        return trivialCount;
     }
 
-    (Knot, int) B_Separate(Knot target)
+    int B_Separate(Knot knot)
     {
-        Knot knot = target.Copy();
-        int crossIndex = knot.crosses.Count() - 1;
-
-        Edge with0 = knot.ConnectedEdge(crossIndex, 0);
-        Edge with1 = knot.ConnectedEdge(crossIndex, 1);
-        Edge with2 = knot.ConnectedEdge(crossIndex, 2);
-        Edge with3 = knot.ConnectedEdge(crossIndex, 3);
-
+        int crossIndex = knot.crosses.Count - 1;
         int trivialCount = 0;
-        if (with0.crossIndex == crossIndex && with0.edgeIndex == 1) trivialCount++;
-        if (with2.crossIndex == crossIndex && with2.edgeIndex == 3) trivialCount++;
-        if (with1.crossIndex == crossIndex && with1.edgeIndex == 2 && with0.crossIndex == crossIndex && with0.edgeIndex == 3) trivialCount++;
+        (int, int) connect0 = knot.ConnectedEdge(crossIndex, 0);
+        (int, int) connect1 = knot.ConnectedEdge(crossIndex, 1);
+        (int, int) connect2 = knot.ConnectedEdge(crossIndex, 2);
+        (int, int) connect3 = knot.ConnectedEdge(crossIndex, 3);
 
-        if (with0.crossIndex == crossIndex && with0.edgeIndex == 3)
+        if (connect0 == (crossIndex, 1) && connect2 == (crossIndex, 3))
         {
-            knot.crosses[with1.crossIndex].connectedEdges[with1.edgeIndex] = with2;
-            knot.crosses[with2.crossIndex].connectedEdges[with2.edgeIndex] = with1;
+            trivialCount = 2;
         }
-        else if (with1.crossIndex == crossIndex && with1.edgeIndex == 2)
+        else if (connect0 == (crossIndex, 3) && connect1 == (crossIndex, 2))
         {
-            knot.crosses[with0.crossIndex].connectedEdges[with0.edgeIndex] = with3;
-            knot.crosses[with3.crossIndex].connectedEdges[with3.edgeIndex] = with0;
+            trivialCount = 1;
+        }
+        else if (connect0 == (crossIndex, 1))
+        {
+            trivialCount = 1;
+            knot.ConnectEdges(connect2, connect3);
+        }
+        else if (connect2 == (crossIndex, 3))
+        {
+            trivialCount = 1;
+            knot.ConnectEdges(connect0, connect1);
+        }
+        else if (connect0 == (crossIndex, 3))
+        {            
+            knot.ConnectEdges(connect1, connect2);
+        }
+        else if (connect1 == (crossIndex, 2))
+        {
+            knot.ConnectEdges(connect0, connect3);
         }
         else
         {
-            knot.crosses[with0.crossIndex].connectedEdges[with0.edgeIndex] = with1;
-            knot.crosses[with1.crossIndex].connectedEdges[with1.edgeIndex] = with0;
-            knot.crosses[with2.crossIndex].connectedEdges[with2.edgeIndex] = with3;
-            knot.crosses[with3.crossIndex].connectedEdges[with3.edgeIndex] = with2;
+            knot.ConnectEdges(connect0, connect1);
+            knot.ConnectEdges(connect2, connect3);
         }
-
         knot.crosses.RemoveAt(crossIndex);
 
-        return (knot, trivialCount);
+        return trivialCount;
     }
 
-    Polynomial SeparatedPolynomial(Knot target, string separates)
+    Polynomial SeparatedPolynomial(Knot knot, string separates)
     {
-        Polynomial polynomial = new(new Term(1, 0));
-        Polynomial A = new(new Term(1, 1));
-        Polynomial B = new(new Term(1, -1));
-        Polynomial trivial = new(new Term(-1, -2), new Term(-1, 2));
-
+        knot = knot.Copy();
+        Polynomial polynomial = new(new Term(1, new Fraction(0)));
+        Polynomial a = new(new Term(1, new Fraction(1)));
+        Polynomial b = new(new Term(1, new Fraction(-1)));
+        Polynomial trivial = new(new Term(-1, new Fraction(-2)), new Term(-1, new Fraction(2)));
         int trivialCount = 0;
 
         foreach (char separate in separates)
         {
-            if (separate == 'A')
+            if (separate == 'a')
             {
-                polynomial.Times(A);
-                (Knot, int) separateResult = A_Separate(target);
-
-                target = separateResult.Item1;
-                trivialCount += separateResult.Item2;
+                polynomial.Times(a);
+                trivialCount += A_Separate(knot);
             }
-
-            if (separate == 'B')
+            else if (separate == 'b')
             {
-                polynomial.Times(B);
-                (Knot, int) separateResult = B_Separate(target);
-
-                target = separateResult.Item1;
-                trivialCount += separateResult.Item2;
+                polynomial.Times(b);
+                trivialCount += B_Separate(knot);
             }
         }
 
@@ -188,47 +206,38 @@ public class Knot
         return polynomial;
     }
 
-    Polynomial Bracket_Polynomial(Knot target)
+    Polynomial Bracket_Polynomial(Knot knot)
     {
         Polynomial polynomial = new();
 
-        void Func(string separates, int n)
+        void Func(string separates)
         {
-            if (separates.Length == n)
+            if (separates.Length == knot.crosses.Count)
             {
-                Polynomial add = SeparatedPolynomial(target, separates);
-                Debug.Log(separates + ": " + add.String("A"));
+                Polynomial add = SeparatedPolynomial(knot, separates);
+                //Debug.Log(separates + ": " + add.String("A"));
                 polynomial.Add(add);
             }
             else
             {
-                Func(separates + "A", n);
-                Func(separates + "B", n);
+                Func(separates + "a");
+                Func(separates + "b");
             }
         }
 
-        Func("", target.crosses.Count());
+        Func("");
         Debug.Log("Bracket: " + polynomial.String("A"));
 
         return polynomial;
     }
 
-    Polynomial X_Polynomial(Knot target)
+    Polynomial X_Polynomial(Knot knot)
     {
-        Polynomial polynomial = Bracket_Polynomial(target);
-        Polynomial factor = new(new Term(-1, 3));
-        int writhe = -target.Writhe;
+        int writhe = knot.Writhe();
+        Term term = new(1 - 2 * (Mathf.Abs(writhe) % 2), new Fraction(3 * -writhe));
+        Polynomial polynomial = Bracket_Polynomial(knot);
 
-        if (writhe < 0)
-        {
-            writhe *= -1;
-            factor = new(new Term(-1, -3));
-        }
-
-        for (int i = 0; i < writhe; i++)
-        {
-            polynomial.Times(factor);
-        }
+        polynomial.Times(new Polynomial(term));
 
         Debug.Log("X: " + polynomial.String("A"));
 
@@ -241,8 +250,7 @@ public class Knot
 
         foreach (Term term in polynomial.terms)
         {
-            term.exponent *= -1;
-            term.denominator = 4;
+            term.exponent.Divide(-4);
         }
 
         Debug.Log("Jones: " + polynomial.String("t"));

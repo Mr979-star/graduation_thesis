@@ -34,32 +34,32 @@ class Polynomial:
         polynomial.terms = [term.Copy() for term in self.terms]
         return polynomial
     
-    def Add(self, polynomial):
+    def Add(self, add):
         i = 0
-        while i < len(polynomial.terms):
+        while i < len(add.terms):
             j = 0
             while j < len(self.terms):
-                if self.terms[j].exponent == polynomial.terms[i].exponent:
-                    self.terms[j].coefficient += polynomial.terms[i].coefficient
-                    del polynomial.terms[i]
+                if self.terms[j].exponent == add.terms[i].exponent:
+                    self.terms[j].coefficient += add.terms[i].coefficient
+                    del add.terms[i]
                     i -= 1
                     if self.terms[j].coefficient == 0:
                         del self.terms[j]
                     break
                 j += 1
             i += 1
-        self.terms += polynomial.terms                
+        self.terms += add.terms                
     
     def TimesOnlyTerm(self, term):
         for t in self.terms:
             t.Times(term)
             
-    def Times(self, polynomial):
+    def Times(self, times):
         answer = Polynomial()  
-        for term in polynomial.terms:
-            p = self.Copy()
-            p.TimesOnlyTerm(term)            
-            answer.Add(p)
+        for term in times.terms:
+            polynomial = self.Copy()
+            polynomial.TimesOnlyTerm(term)            
+            answer.Add(polynomial)
         self.terms = answer.terms
     
     def ToString(self, var):

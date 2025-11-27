@@ -28,25 +28,22 @@ class Cross:
             return -1
 
 class Knot:
-    def __init__(self, *crosses, startEdges = [(0, 0)]):
+    def __init__(self, crosses, startEdges = [(0, 0)]):
         self.crosses = crosses
-        self.SetWrithe(startEdges)
+        self.startEdges = startEdges
         
     def Copy(self):
-        knot = Knot()
-        knot.crosses = [cross.Copy() for cross in self.crosses]
-        return knot
+        return Knot([cross.Copy() for cross in self.crosses])
                       
     def ConnectedEdge(self, crossIndex, edgeIndex):
         return self.crosses[crossIndex].connections[edgeIndex]
                       
-    def SetWrithe(self, startEdges):
+    def Writhe(self):
         if len(self.crosses) == 0:
-            self.writhe = 0
-            return
+            return 0
 
         componentIndex = 0
-        currentEdge = startEdges[componentIndex]
+        currentEdge = self.startEdges[componentIndex]
 
         while True:
             nextEdge = self.ConnectedEdge(currentEdge[0], currentEdge[1])
@@ -57,11 +54,11 @@ class Knot:
             
             currentEdge = (nextEdge[0], (nextEdge[1] + 2) % 4)
             
-            if currentEdge == startEdges[componentIndex]:
+            if currentEdge == self.startEdges[componentIndex]:
                 componentIndex += 1
-                currentEdge = startEdges[componentIndex]
+                currentEdge = self.startEdges[componentIndex]
         
-        self.writhe = sum(cross.Sign() for cross in self.crosses)
+        return sum(cross.Sign() for cross in self.crosses)
             
     def ConnectEdges(self, edge1, edge2):
         self.crosses[edge1[0]].connections[edge1[1]] = edge2
@@ -178,7 +175,8 @@ class Calculator:
         return polynomial
 
     def X_Polynomial(self, knot):
-        term = Term(1 - 2 * (knot.writhe % 2), Fraction(3 * -knot.writhe))
+        writhe = knot.Writhe()
+        term = Term(1 - 2 * (writhe % 2), Fraction(3 * -writhe))
         polynomial = self.Bracket_Polynomial(knot)
         polynomial.Times(Polynomial(term))
         print(f"X      : {polynomial.ToString("A")}")

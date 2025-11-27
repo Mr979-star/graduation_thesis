@@ -1,6 +1,6 @@
 from Knots import *
 
-calculator = Calculator()
+# calculator = Calculator()
 # calculator.Calculate(Hopf())
 # calculator.Calculate(Trivial())
 # calculator.Calculate(Trefoil())
@@ -11,4 +11,4 @@ calculator = Calculator()
 # calculator.Calculate(Hopf_minus())
 # calculator.Calculate(Borromean())
 
-calculator.Calculate(ThistlethwaiteUnknot())
+# calculator.Calculate(ThistlethwaiteUnknot())

@@ -20,13 +20,10 @@ public class SceneManager : MonoBehaviour
     List<Line> lines = new();
     Line currentLine;
     EdgeBehaviour draggedEdge;
-    EdgeBehaviour connectedEdge;
     EdgeBehaviour selectedEdge;
 
     List<CrossBehaviour> crosses = new();
     CrossBehaviour selectedCross;
-
-    bool spining = false;
 
     Knot knot;
 
@@ -68,7 +65,7 @@ public class SceneManager : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.R))
             {
-                knot.ChangeOrientation(selectedEdge.TrackIndex);
+                knot.ChangeOrientation(selectedEdge.Edge);
                 Show();
             }
         }
@@ -77,37 +74,29 @@ public class SceneManager : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.S))
             {
-                lines.RemoveAll(x => x.ConnectWith(selectedCross));
+                lines.RemoveAll(line => selectedCross.EdgeBehaviours.Any(edge => edge.ConnectedLine == line));
                 UpdateTexture();
 
-                spining = true;
+                selectedCross.Spining = true;
             }            
-
-            if (spining)
-            {
-                selectedCross.transform.Rotate(0, 0, 90 * Time.deltaTime);
-            }
 
             if (Input.GetKeyUp(KeyCode.S))
             {
-                spining = false;
+                selectedCross.Spining = false;
             }
 
             if (Input.GetKeyDown(KeyCode.D))
             {
-                lines.RemoveAll(x => x.ConnectWith(selectedCross));
+                lines.RemoveAll(line => selectedCross.EdgeBehaviours.Any(edge => edge.ConnectedLine == line));
                 UpdateTexture();
 
                 crosses.Remove(selectedCross);
                 Destroy(selectedCross.gameObject);
-
-                spining = false;
             }
 
             if (Input.GetKeyDown(KeyCode.F))
             {
-                selectedCross.transform.Rotate(0, 0, 90);
-                SwapCross(selectedCross);
+                selectedCross.Flip();
                 UpdateTexture();
                 knot = null;
             }
@@ -139,61 +128,21 @@ public class SceneManager : MonoBehaviour
     {
         for (int i = 0; i < crosses.Count; i++) crosses[i].SetIndex(i);
 
-        List<Cross> crossList = new();
+        knot = new(crosses.Select(cross => cross.CreateCross()).ToList());
 
-        for (int i = 0; i < crosses.Count; i++)
-        {
-            List<Edge> edgeList = new() { null, null, null, null };
-
-            foreach (Line line in lines)
-            {
-                if (line.Edge1.crossIndex == i) edgeList[line.Edge1.edgeIndex] = new(line.Edge2.crossIndex, line.Edge2.edgeIndex);
-                if (line.Edge2.crossIndex == i) edgeList[line.Edge2.edgeIndex] = new(line.Edge1.crossIndex, line.Edge1.edgeIndex);
-            }
-            Cross cross = new(edgeList);
-            crossList.Add(cross);
-        }
-
-        knot = new(crossList);
         Show();
     }
 
     void Show()
     {
-        knot.Print();
-
-        for (int i = 0; i < knot.edgeTracks.Count; i++)
+        foreach (Cross cross in knot.crosses)
         {
-            for (int j = 0; j < knot.edgeTracks[i].Count; j++)
-            {
-                crosses[knot.edgeTracks[i][j].crossIndex].SetOrientation(j % 2 == 0, knot.edgeTracks[i][j].edgeIndex, i);
-            }
+            Debug.Log($"{cross.connectedEdges[0]}, {cross.connectedEdges[1]}, {cross.connectedEdges[2]}, {cross.connectedEdges[3]}");
         }
-
-        knot.Writhe = crosses.Sum(cross => cross.Sgn());
-
         Polynomial jones = knot.Jones_Polynomial();
         jonesText.text = "Jones: " + jones.String("t");
-    }
 
-    void SwapCross(CrossBehaviour cross)
-    {
-        List<Line> targetLines = new() { null, null, null, null };
-        List<EdgeBehaviour> targetEdges = new() { null, null, null, null };
-
-        foreach (Line line in lines)
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                if (line.Edge1 == cross.EdgeBehaviours[i]) { targetLines[i] = line; targetEdges[i] = line.Edge1; }
-                else if (line.Edge2 == cross.EdgeBehaviours[i]) { targetLines[i] = line; targetEdges[i] = line.Edge2; }
-            }
-        }
-
-        for (int i = 0; i < 4; i++)
-        {
-            if (targetLines[i] != null) targetLines[i].ChangeEdge(targetEdges[i], cross.EdgeBehaviours[(i + 3) % 4]);
-        }
+        foreach (CrossBehaviour cross in crosses) cross.SetOrientation();
     }
 
     public void OnClickCross(CrossBehaviour selected)
@@ -209,13 +158,6 @@ public class SceneManager : MonoBehaviour
     {
         selectedCross = null;
         foreach (CrossBehaviour cross in crosses) cross.Clear();
-    }
-
-    public void ConnectEdge(EdgeBehaviour edge)
-    {
-        if (draggedEdge == null) return;
-
-        connectedEdge = edge;
     }
 
     public void SetSelectedEdge(EdgeBehaviour edge)
@@ -235,7 +177,7 @@ public class SceneManager : MonoBehaviour
 
     public void OnBeginCrossDrag(CrossBehaviour cross)
     {
-        lines.RemoveAll(x => x.ConnectWith(cross));
+        lines.RemoveAll(line => cross.EdgeBehaviours.Any(edge => edge.ConnectedLine == line));
         UpdateTexture();
     }
 
@@ -246,7 +188,7 @@ public class SceneManager : MonoBehaviour
         draggedEdge = edge;
         currentLine = new();
 
-        lines.RemoveAll(x => x.ConnectWith(edge));
+        lines.RemoveAll(line => edge.ConnectedLine == line);
         UpdateTexture();
 
         prePos = transform.InverseTransformPoint(edge.transform.position) + new Vector3(800, 450);
@@ -287,18 +229,23 @@ public class SceneManager : MonoBehaviour
 
     public void OnEndDrag()
     {
-        if (draggedEdge && connectedEdge)
+        if (draggedEdge && selectedEdge && draggedEdge != selectedEdge)
         {
-            lines.RemoveAll(x => x.ConnectWith(connectedEdge));
-            Draw(prePos, transform.InverseTransformPoint(connectedEdge.transform.position) + new Vector3(800, 450));
+            lines.RemoveAll(line => selectedEdge.ConnectedLine == line);
+            Draw(prePos, transform.InverseTransformPoint(selectedEdge.transform.position) + new Vector3(800, 450));
 
-            currentLine.Set(draggedEdge, connectedEdge);
             lines.Add(currentLine);
+
+            draggedEdge.ConnectedLine = currentLine;
+            selectedEdge.ConnectedLine = currentLine;
+
+            draggedEdge.ConnectedEdge = selectedEdge;
+            selectedEdge.ConnectedEdge = draggedEdge;
         }
 
         UpdateTexture();
 
-        draggedEdge = null; connectedEdge = null;
+        draggedEdge = null;
     }
 
     void SetPixel(int x, int y)
