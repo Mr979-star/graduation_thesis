@@ -6,8 +6,7 @@ using UnityEngine.UI;
 
 public class EdgeBehaviour : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler
 {
-    [SerializeField] GameObject outArrow;
-    [SerializeField] GameObject inArrow;
+    [SerializeField] GameObject arrow;
 
     Image image;
     SceneManager manager;
@@ -16,7 +15,6 @@ public class EdgeBehaviour : MonoBehaviour, IDragHandler, IBeginDragHandler, IEn
 
     public (int, int) Edge;
     public EdgeBehaviour ConnectedEdge { get; set; }
-
     public Line ConnectedLine { get; set; }
 
     void Start()
@@ -44,12 +42,12 @@ public class EdgeBehaviour : MonoBehaviour, IDragHandler, IBeginDragHandler, IEn
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        manager.OnBeginDrag(this);
+        manager.OnBeginEdgeDrag(this);
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        manager.OnDrag(eventData);
+        manager.OnEdgeDrag(eventData);
     }
 
     public void OnEndDrag(PointerEventData eventData)
@@ -58,15 +56,8 @@ public class EdgeBehaviour : MonoBehaviour, IDragHandler, IBeginDragHandler, IEn
         manager.OnEndDrag();
     }
 
-    public void SetArrow(bool isOut)
+    public void SetArrow(bool active)
     {
-        outArrow.SetActive(isOut);
-        inArrow.SetActive(!isOut);
-    }
-
-    public void ResetArrow()
-    {
-        outArrow.SetActive(false);
-        inArrow.SetActive(false);
+        arrow.SetActive(active);
     }
 }

@@ -9,8 +9,10 @@ using UnityEngine.EventSystems;
 public class Cross
 {
     public List<(int, int)> connectedEdges;
-    public Cross(List<(int, int)> connectedEdges) { this.connectedEdges = connectedEdges; }
-    public Cross(params (int, int)[] connectedEdges) { this.connectedEdges = connectedEdges.ToList(); }
+    public Cross((int, int) edge0, (int, int) edge1, (int, int) edge2, (int, int) edge3)
+    {
+        connectedEdges = new() { edge0, edge1, edge2, edge3 };
+    }
 
     public bool? Track_0to2 { get; private set; } = null;
     public bool? Track_1to3 { get; private set; } = null;
@@ -30,12 +32,7 @@ public class Cross
         else return 0;
     }
 
-    public Cross Copy()
-    {
-        Cross cross = new();
-        cross.connectedEdges = new List<(int, int)>(connectedEdges);
-        return cross;
-    }
+    public Cross Copy() => new(connectedEdges[0], connectedEdges[1], connectedEdges[2], connectedEdges[3]);
 }
 
 public class CrossBehaviour : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler, IPointerDownHandler
@@ -48,11 +45,9 @@ public class CrossBehaviour : MonoBehaviour, IDragHandler, IBeginDragHandler, IE
     SceneManager manager;
 
     Color selectedColor = new(1, 0, 0, 0.5f);
-    Color NormalColor = new(1, 1, 1, 0.1f);
 
     public List<EdgeBehaviour> EdgeBehaviours => edgeBehaviours;
     public int CrossIndex { get; private set; }
-    public bool Spining { get; set; } = false;
 
     Cross cross;
 
@@ -65,14 +60,6 @@ public class CrossBehaviour : MonoBehaviour, IDragHandler, IBeginDragHandler, IE
         this.manager = manager;
 
         for(int i = 0; i < 4; i++) edgeBehaviours[i].Init(manager);
-    }
-
-    void Update()
-    {
-        if (Spining)
-        {
-            transform.Rotate(0, 0, 90 * Time.deltaTime);
-        }
     }
 
     public void SetIndex(int index)
@@ -93,7 +80,7 @@ public class CrossBehaviour : MonoBehaviour, IDragHandler, IBeginDragHandler, IE
 
     public void Clear()
     {
-        image.color = NormalColor;
+        image.color = Color.clear;
     }
 
     public void OnPointerDown(PointerEventData eventData)
@@ -122,18 +109,15 @@ public class CrossBehaviour : MonoBehaviour, IDragHandler, IBeginDragHandler, IE
 
     public void SetOrientation()
     {
-        if (cross.Track_0to2 is bool track_0to2 && cross.Track_1to3 is bool track_1to3)
-        {
-            edgeBehaviours[0].SetArrow(!track_0to2);
-            edgeBehaviours[1].SetArrow(!track_1to3);
-            edgeBehaviours[2].SetArrow(track_0to2);
-            edgeBehaviours[3].SetArrow(track_1to3);
-        }
+        edgeBehaviours[0].SetArrow(cross.Track_0to2 == false);
+        edgeBehaviours[1].SetArrow(cross.Track_1to3 == false);
+        edgeBehaviours[2].SetArrow(cross.Track_0to2 == true);
+        edgeBehaviours[3].SetArrow(cross.Track_1to3 == true);
     }
 
     public void ResetOrientation()
     {
-        for (int i = 0; i < 4; i++) edgeBehaviours[i].ResetArrow();
+        for (int i = 0; i < 4; i++) edgeBehaviours[i].SetArrow(false);
     }
 
     public void Flip()

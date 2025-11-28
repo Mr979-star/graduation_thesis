@@ -1,9 +1,9 @@
 from Knots import *
 
-# calculator = Calculator()
+calculator = Calculator()
 # calculator.Calculate(Hopf())
 # calculator.Calculate(Trivial())
-# calculator.Calculate(Trefoil())
+calculator.Calculate(Trefoil())
 # calculator.Calculate(EightFigure())
 
 # calculator.Calculate(Five_1())

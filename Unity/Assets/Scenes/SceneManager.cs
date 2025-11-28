@@ -21,7 +21,6 @@ public class SceneManager : MonoBehaviour
     Line currentLine;
     EdgeBehaviour draggedEdge;
     EdgeBehaviour selectedEdge;
-
     List<CrossBehaviour> crosses = new();
     CrossBehaviour selectedCross;
 
@@ -29,9 +28,13 @@ public class SceneManager : MonoBehaviour
 
     void Start()
     {
-        texture = new Texture2D(1600, 900, TextureFormat.RGBA32, false);
+        texture = new Texture2D(Screen.width, Screen.height, TextureFormat.RGBA32, false);
         rawImage.texture = texture;
-        UpdateTexture();
+
+        var pixelData = texture.GetPixelData<Color32>(0);
+
+        for (var i = 0; i < pixelData.Length; i++) pixelData[i] = Color.clear;
+        texture.Apply();
     }
 
     void FixedUpdate()
@@ -57,7 +60,7 @@ public class SceneManager : MonoBehaviour
         {
             CrossBehaviour cross = Instantiate(crossPrefab, transform);
             cross.Init(this);
-            cross.transform.localPosition = Input.mousePosition - new Vector3(800, 450);
+            cross.transform.localPosition = Input.mousePosition - new Vector3(Screen.width / 2, Screen.height / 2);
             crosses.Add(cross);
         }
 
@@ -74,22 +77,17 @@ public class SceneManager : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.S))
             {
-                lines.RemoveAll(line => selectedCross.EdgeBehaviours.Any(edge => edge.ConnectedLine == line));
-                UpdateTexture();
+                RemoveConnectedLines(selectedCross);
+            }
 
-                selectedCross.Spining = true;
-            }            
-
-            if (Input.GetKeyUp(KeyCode.S))
+            if (Input.GetKey(KeyCode.S))
             {
-                selectedCross.Spining = false;
+                selectedCross.transform.Rotate(0, 0, 90 * Time.deltaTime);
             }
 
             if (Input.GetKeyDown(KeyCode.D))
             {
-                lines.RemoveAll(line => selectedCross.EdgeBehaviours.Any(edge => edge.ConnectedLine == line));
-                UpdateTexture();
-
+                RemoveConnectedLines(selectedCross);
                 crosses.Remove(selectedCross);
                 Destroy(selectedCross.gameObject);
             }
@@ -97,7 +95,6 @@ public class SceneManager : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.F))
             {
                 selectedCross.Flip();
-                UpdateTexture();
                 knot = null;
             }
         }
@@ -107,10 +104,7 @@ public class SceneManager : MonoBehaviour
     {
         if (crosses.Count > 0 && lines.Count == 2 * crosses.Count)
         {
-            if (knot == null)
-            {
-                CreateKnot();
-            }
+            if (knot == null) CreateKnot();
         }
         else
         {
@@ -139,9 +133,16 @@ public class SceneManager : MonoBehaviour
         {
             Debug.Log($"{cross.connectedEdges[0]}, {cross.connectedEdges[1]}, {cross.connectedEdges[2]}, {cross.connectedEdges[3]}");
         }
-        Polynomial jones = knot.Jones_Polynomial();
-        jonesText.text = "Jones: " + jones.String("t");
 
+        try
+        {
+            jonesText.text = "Jones: " + knot.Jones_Polynomial().String("t");
+        }
+        catch
+        {
+            jonesText.text = "Jones: error";
+        }
+        
         foreach (CrossBehaviour cross in crosses) cross.SetOrientation();
     }
 
@@ -165,36 +166,52 @@ public class SceneManager : MonoBehaviour
         selectedEdge = edge;
     }
 
-    void UpdateTexture()
+    void RemoveConnectedLines(CrossBehaviour cross)
     {
-        var pixelData = texture.GetPixelData<Color32>(0);
+        for (int i = 0; i < lines.Count; i++)
+        {
+            if (cross.EdgeBehaviours.Any(edge => edge.ConnectedLine == lines[i]))
+            {
+                lines[i].Remove();
+                lines.RemoveAt(i);
+                i--;
+            }
+        }
+        texture.Apply();
+    }
 
-        for (var i = 0; i < pixelData.Length; i++) pixelData[i] = Color.clear;
-
-        foreach (Line line in lines) line.Draw(texture);
+    void RemoveConnectedLine(EdgeBehaviour edge)
+    {
+        for (int i = 0; i < lines.Count; i++)
+        {
+            if (edge.ConnectedLine == lines[i])
+            {
+                lines[i].Remove();
+                lines.RemoveAt(i);
+                break;
+            }
+        }
         texture.Apply();
     }
 
     public void OnBeginCrossDrag(CrossBehaviour cross)
     {
-        lines.RemoveAll(line => cross.EdgeBehaviours.Any(edge => edge.ConnectedLine == line));
-        UpdateTexture();
+        RemoveConnectedLines(cross);
     }
 
-    public void OnBeginDrag(EdgeBehaviour edge)
+    public void OnBeginEdgeDrag(EdgeBehaviour edge)
     {
         ClearCross();
 
         draggedEdge = edge;
-        currentLine = new();
+        currentLine = new(texture);
 
-        lines.RemoveAll(line => edge.ConnectedLine == line);
-        UpdateTexture();
+        RemoveConnectedLine(edge);
 
-        prePos = transform.InverseTransformPoint(edge.transform.position) + new Vector3(800, 450);
+        prePos = transform.InverseTransformPoint(edge.transform.position) + new Vector3(Screen.width / 2, Screen.height / 2);
     }
 
-    public void OnDrag(PointerEventData eventData)
+    public void OnEdgeDrag(PointerEventData eventData)
     {
         Draw(prePos, eventData.position);
 
@@ -223,7 +240,6 @@ public class SceneManager : MonoBehaviour
             }
             SetPixel((int)pos.x, (int)pos.y);
         }
-
         texture.Apply();
     }
 
@@ -231,8 +247,8 @@ public class SceneManager : MonoBehaviour
     {
         if (draggedEdge && selectedEdge && draggedEdge != selectedEdge)
         {
-            lines.RemoveAll(line => selectedEdge.ConnectedLine == line);
-            Draw(prePos, transform.InverseTransformPoint(selectedEdge.transform.position) + new Vector3(800, 450));
+            RemoveConnectedLine(selectedEdge);
+            Draw(prePos, transform.InverseTransformPoint(selectedEdge.transform.position) + new Vector3(Screen.width / 2, Screen.height / 2));
 
             lines.Add(currentLine);
 
@@ -242,8 +258,11 @@ public class SceneManager : MonoBehaviour
             draggedEdge.ConnectedEdge = selectedEdge;
             selectedEdge.ConnectedEdge = draggedEdge;
         }
-
-        UpdateTexture();
+        else
+        {
+            currentLine.Remove();
+            texture.Apply();
+        }
 
         draggedEdge = null;
     }
