@@ -50,22 +50,18 @@ class Knot:
             self.crosses[nextEdge[0]].SetTrack(nextEdge[1])
             
             if sum(cross.Sign() == 0 for cross in self.crosses) == 0:
-                break
+                return sum(cross.Sign() for cross in self.crosses)
             
             currentEdge = (nextEdge[0], (nextEdge[1] + 2) % 4)
             
             if currentEdge == self.startEdges[componentIndex]:
                 componentIndex += 1
                 currentEdge = self.startEdges[componentIndex]
-        
-        return sum(cross.Sign() for cross in self.crosses)
-            
+
     def ConnectEdges(self, edge1, edge2):
         self.crosses[edge1[0]].connections[edge1[1]] = edge2
         self.crosses[edge2[0]].connections[edge2[1]] = edge1
 
-
-class Calculator:
     def A_Separate(self, knot):
         crossIndex = len(knot.crosses) - 1
         trivialCount = 0
@@ -99,7 +95,6 @@ class Calculator:
             knot.ConnectEdges(connect1, connect2)
 
         del knot.crosses[crossIndex]
-
         return trivialCount
 
     def B_Separate(self, knot):
@@ -135,23 +130,22 @@ class Calculator:
             knot.ConnectEdges(connect2, connect3)
 
         del knot.crosses[crossIndex]
-
         return trivialCount
 
-    def SeparatedPolynomial(self, knot, separate):
-        knot = knot.Copy()
+    def SeparatedPolynomial(self, separate):
+        knot = self.Copy()
         polynomial = Polynomial(Term(1, Fraction(0)))
-        a = Polynomial(Term(1, Fraction(1)))
-        b = Polynomial(Term(1, Fraction(-1)))
+        a = Term(1, Fraction(1))
+        b = Term(1, Fraction(-1))
         trivial = Polynomial(Term(-1, Fraction(-2)), Term(-1, Fraction(2)))
         trivialCount = 0
 
         for ab in separate:
             if ab == "a":
-                polynomial.Times(a)
+                polynomial.TimesOnlyTerm(a)
                 trivialCount += self.A_Separate(knot)
             elif ab == "b":
-                polynomial.Times(b)
+                polynomial.TimesOnlyTerm(b)
                 trivialCount += self.B_Separate(knot)
 
         for _ in range(trivialCount - 1):
@@ -159,39 +153,39 @@ class Calculator:
 
         return polynomial
 
-    def Bracket_Polynomial(self, knot): 
+    def Bracket_Polynomial(self): 
         polynomial = Polynomial()
         
         def AddAllSeparates(separate):
-            if len(separate) == len(knot.crosses):          
-                add = self.SeparatedPolynomial(knot, separate)
+            if len(separate) == len(self.crosses):          
+                add = self.SeparatedPolynomial(separate)
                 polynomial.Add(add)
             else:
                 AddAllSeparates(separate + "a")
                 AddAllSeparates(separate + "b")
                 
         AddAllSeparates("")
-        print(f"bracket: {polynomial.ToString("A")}")
         return polynomial
 
-    def X_Polynomial(self, knot):
-        writhe = knot.Writhe()
+    def X_Polynomial(self):
+        writhe = self.Writhe()
         term = Term(1 - 2 * (writhe % 2), Fraction(3 * -writhe))
-        polynomial = self.Bracket_Polynomial(knot)
-        polynomial.Times(Polynomial(term))
-        print(f"X      : {polynomial.ToString("A")}")
+        polynomial = self.Bracket_Polynomial()
+        polynomial.TimesOnlyTerm(term)
         return polynomial
 
-    def Jones_Polynomial(self, knot):       
-        polynomial = self.X_Polynomial(knot)
+    def Jones_Polynomial(self):       
+        polynomial = self.X_Polynomial()
         for term in polynomial.terms:
-            term.exponent /= -4
-        print(f"Jones  : {polynomial.ToString("t")}")
+            term.exponent /= -4 
         return polynomial
         
-    def Calculate(self, knot):
-        print(f"\n---{knot.__class__.__name__}---")       
+    def Calculate(self):
+        print(f"\n---{self.__class__.__name__}---")   
+            
         startTime = time.perf_counter() 
-        self.Jones_Polynomial(knot)        
+        polynomial = self.Jones_Polynomial()     
+        print(f"Jones : {polynomial.ToString("t")}")
+          
         endTime = time.perf_counter()
-        print(f"time   : {endTime - startTime}s")
+        print(f"time  : {endTime - startTime}s")

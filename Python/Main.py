@@ -1,14 +1,23 @@
 from Knots import *
 
-calculator = Calculator()
-# calculator.Calculate(Hopf())
-# calculator.Calculate(Trivial())
-calculator.Calculate(Trefoil())
-# calculator.Calculate(EightFigure())
+hopf = Hopf()
+hopf.Calculate()
 
-# calculator.Calculate(Five_1())
-# calculator.Calculate(Seven_3())
-# calculator.Calculate(Hopf_minus())
-# calculator.Calculate(Borromean())
+trivial = Trivial()
+trefoil = Trefoil()
+eightFigure = EightFigure()
+trivial.Calculate()
+trefoil.Calculate()
+eightFigure.Calculate()
 
-# calculator.Calculate(ThistlethwaiteUnknot())
+five_1 = Five_1()
+seven_3 = Seven_3()
+hopf_minus = Hopf_minus()
+borromean = Borromean()
+five_1.Calculate()
+seven_3.Calculate()
+hopf_minus.Calculate()
+borromean.Calculate()
+
+thistlethwaiteUnknot = ThistlethwaiteUnknot()
+thistlethwaiteUnknot.Calculate()
