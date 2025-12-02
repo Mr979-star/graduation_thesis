@@ -30,9 +30,7 @@ class Polynomial:
         self.terms = list(terms)
     
     def Copy(self):
-        polynomial = Polynomial()
-        polynomial.terms = [term.Copy() for term in self.terms]
-        return polynomial
+        return Polynomial(*[term.Copy() for term in self.terms])
     
     def Add(self, add):
         i = 0
